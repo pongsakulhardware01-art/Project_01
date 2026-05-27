@@ -18,6 +18,35 @@ import {
   LayoutGrid,
 } from "lucide-react";
 
+const MenuCard = ({
+  onClick,
+  icon: Icon,
+  title,
+  description,
+}: {
+  onClick: () => void;
+  icon: any;
+  title: string;
+  description: string;
+}) => (
+  <motion.button
+    whileHover={{ y: -5 }}
+    onClick={onClick}
+    className="bg-white hover:border-[#C62828] text-left p-6 md:p-8 rounded-3xl border border-neutral-200/80 shadow-md group transition flex flex-col justify-between h-[230px]"
+  >
+    <div className="p-3.5 bg-red-50 text-[#C62828] rounded-2xl group-hover:bg-[#C62828] group-hover:text-white transition w-fit">
+      <Icon size={28} />
+    </div>
+    <div className="space-y-2">
+      <h3 className="font-extrabold text-neutral-800 text-lg md:text-xl group-hover:text-[#C62828] transition flex items-center justify-between">
+        <span>{title}</span>
+        <ChevronRight size={18} className="text-neutral-300 group-hover:text-[#C62828] transition" />
+      </h3>
+      <p className="text-neutral-500 text-xs sm:text-sm leading-relaxed">{description}</p>
+    </div>
+  </motion.button>
+);
+
 export default function App() {
   // Navigation State
   // "menu", "price", "weight", "settings"
@@ -165,67 +194,25 @@ export default function App() {
               {/* Bento menu matrix */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 
-                {/* Price calculator button */}
-                <motion.button
-                  whileHover={{ y: -5 }}
+                <MenuCard
                   onClick={() => setCurrentScreen("price")}
-                  className="bg-white hover:border-[#C62828] text-left p-6 md:p-8 rounded-3xl border border-neutral-200/80 shadow-md group transition flex flex-col justify-between h-[230px]"
-                >
-                  <div className="p-3.5 bg-red-50 text-[#C62828] rounded-2xl group-hover:bg-[#C62828] group-hover:text-white transition w-fit">
-                    <Calculator size={28} />
-                  </div>
-                  <div className="space-y-2">
-                    <h3 className="font-extrabold text-neutral-800 text-lg md:text-xl group-hover:text-[#C62828] transition flex items-center justify-between">
-                      <span>คำนวณราคาวัสดุ</span>
-                      <ChevronRight size={18} className="text-neutral-300 group-hover:text-[#C62828] transition" />
-                    </h3>
-                    <p className="text-neutral-500 text-xs sm:text-sm leading-relaxed">
-                      แผ่นพื้นสำเร็จรูปสามัญ - มอก., เสาเข็ม I-Shape ขนาดหน้าเสา และแผ่นพื้นกลวงพิกัดพิเศษ
-                    </p>
-                  </div>
-                </motion.button>
-
-                {/* Weights aggregate button */}
-                <motion.button
-                  whileHover={{ y: -5 }}
+                  icon={Calculator}
+                  title="คำนวณราคาวัสดุ"
+                  description="แผ่นพื้นสำเร็จรูปสามัญ - มอก., เสาเข็ม I-Shape ขนาดหน้าเสา และแผ่นพื้นกลวงพิกัดพิเศษ"
+                />
+                <MenuCard
                   onClick={() => setCurrentScreen("weight")}
-                  className="bg-white hover:border-[#C62828] text-left p-6 md:p-8 rounded-3xl border border-neutral-200/80 shadow-md group transition flex flex-col justify-between h-[230px]"
-                >
-                  <div className="p-3.5 bg-red-50 text-[#C62828] rounded-2xl group-hover:bg-[#C62828] group-hover:text-white transition w-fit">
-                    <Scale size={28} />
-                  </div>
-                  <div className="space-y-2">
-                    <h3 className="font-extrabold text-neutral-800 text-lg md:text-xl group-hover:text-[#C62828] transition flex items-center justify-between">
-                      <span>คำนวณน้ำหนักรวมวิศวกรรม</span>
-                      <ChevronRight size={18} className="text-neutral-300 group-hover:text-[#C62828] transition" />
-                    </h3>
-                    <p className="text-neutral-500 text-xs sm:text-sm leading-relaxed">
-                      คำนวณระวางกองวัสดุเพื่อเทียบอัตราพิกัดบรรทุกรถส่ง หน้างานปลอดภัย 100%
-                    </p>
-                  </div>
-                </motion.button>
-
-                {/* Settings & export catalog button */}
-                <motion.button
-                  whileHover={{ y: -5 }}
+                  icon={Scale}
+                  title="คำนวณน้ำหนักรวมวิศวกรรม"
+                  description="คำนวณระวางกองวัสดุเพื่อเทียบอัตราพิกัดบรรทุกรถส่ง หน้างานปลอดภัย 100%"
+                />
+                <MenuCard
                   onClick={() => setCurrentScreen("settings")}
-                  className="bg-white hover:border-[#C62828] text-left p-6 md:p-8 rounded-3xl border border-neutral-200/80 shadow-md group transition flex flex-col justify-between h-[230px]"
-                >
-                  <div className="p-3.5 bg-red-50 text-[#C62828] rounded-2xl group-hover:bg-[#C62828] group-hover:text-white transition w-fit">
-                    <Settings size={28} />
-                  </div>
-                  <div className="space-y-2">
-                    <h3 className="font-extrabold text-neutral-800 text-lg md:text-xl group-hover:text-[#C62828] transition flex items-center justify-between">
-                      <span>ตั้งค่าระบบ & อัตราราคากลาง</span>
-                      <ChevronRight size={18} className="text-neutral-300 group-hover:text-[#C62828] transition" />
-                    </h3>
-                    <p className="text-neutral-500 text-xs sm:text-sm leading-relaxed">
-                      ปรับเปลี่ยนราคาส่งมอบ กำหนดน้ำหนักมาตรฐาน และดาวน์โหลดรูปภาพสรุปรุ่น {APP_VERSION} แค็ตตาล็อก
-                    </p>
-                  </div>
-                </motion.button>
+                  icon={Settings}
+                  title="ตั้งค่าระบบ & อัตราราคากลาง"
+                  description={`ปรับเปลี่ยนราคาส่งมอบ กำหนดน้ำหนักมาตรฐาน และดาวน์โหลดรูปภาพสรุปรุ่น ${APP_VERSION} แค็ตตาล็อก`}
+                />
               </div>
-
 
             </motion.div>
           ) : currentScreen === "price" ? (
@@ -320,3 +307,4 @@ export default function App() {
     </div>
   );
 }
+
