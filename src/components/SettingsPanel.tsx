@@ -664,7 +664,7 @@ export default function SettingsPanel({ settings, setSettings }: SettingsPanelPr
       </div>
 
       {/* DYNAMIC DRAFT DOCUMENT TO CAPTURE - HIDDEN/VISIBLE ONLY ON EMISSION */}
-      <div className="absolute overflow-hidden w-0 h-0" style={{ left: "-9999px", top: "-9999px" }}>
+      <div className="absolute" style={{ position: "absolute", left: "-9999px", top: "-9999px", width: "820px", height: "auto", overflow: "visible" }}>
         <div
           ref={reportRef}
           className="w-[800px] p-10 bg-white font-sans text-neutral-800 relative space-y-8"
