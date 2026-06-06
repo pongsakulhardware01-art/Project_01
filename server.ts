@@ -117,53 +117,77 @@ async function startServer() {
         "Ensure all lengths are correctly parsed as decimal numbers in meters (e.g. 2.0, 3.5, etc.), counts as integers (number of slabs), " +
         "type as 'normal' or 'm.o.c' based on keywords, and any listed custom price/rate in Thai Baht.";
 
-      const response = await ai.models.generateContent({
-        model: "gemini-3.5-flash",
-        contents: [imagePart, { text: prompt }],
-        config: {
-          systemInstruction,
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-              slabs: {
-                type: Type.ARRAY,
-                items: {
-                  type: Type.OBJECT,
-                  properties: {
-                    length: {
-                      type: Type.NUMBER,
-                      description: "ความยาวของแผ่นพื้นกี่เมตร (เมตร)"
-                    },
-                    count: {
-                      type: Type.INTEGER,
-                      description: "จำนวนแผ่นพื้นกี่แผ่น (แผ่น / ชิ้น)"
-                    },
-                    boardType: {
-                      type: Type.STRING,
-                      description: "ประเภทแผ่นพื้น: 'normal' (ธรรมดา) หรือ 'm.o.c' (มอก.)"
-                    },
-                    customPriceSqm: {
-                      type: Type.NUMBER,
-                      description: "ราคาเฉพาะตารางเมตรกรณีที่ระบุในภาพโดยตรง ถ้าไม่มีให้กำหนดเป็น 0 หรือ null"
-                    },
-                    wireCount: {
-                      type: Type.STRING,
-                      description: "จำนวนลวดสายอัดแรง ถ้ามีระบุ เช่น '4', '5', '6', '7', '8' หรือถ้าไม่มีใช้ 'auto'"
-                    },
-                    label: {
-                      type: Type.STRING,
-                      description: "บันทึกย่อหรือรายละเอียดสั้นๆ รวบรวมจากภาพ เช่น 'แผ่นพื้น 2.50 ม. (สายไฟ 4 เส้น)'"
+      const modelsToTry = ["gemini-3.5-flash", "gemini-3.1-flash-lite"];
+      let response = null;
+      let lastError = null;
+
+      for (const modelName of modelsToTry) {
+        try {
+          console.log(`Attempting Gemini API with model: ${modelName}`);
+          response = await ai.models.generateContent({
+            model: modelName,
+            contents: [imagePart, { text: prompt }],
+            config: {
+              systemInstruction,
+              responseMimeType: "application/json",
+              responseSchema: {
+                type: Type.OBJECT,
+                properties: {
+                  slabs: {
+                    type: Type.ARRAY,
+                    items: {
+                      type: Type.OBJECT,
+                      properties: {
+                        length: {
+                          type: Type.NUMBER,
+                          description: "ความยาวของแผ่นพื้นกี่เมตร (เมตร)"
+                        },
+                        count: {
+                          type: Type.INTEGER,
+                          description: "จำนวนแผ่นพื้นกี่แผ่น (แผ่น / ชิ้น)"
+                        },
+                        boardType: {
+                          type: Type.STRING,
+                          description: "ประเภทแผ่นพื้น: 'normal' (ธรรมดา) หรือ 'm.o.c' (มอก.)"
+                        },
+                        customPriceSqm: {
+                          type: Type.NUMBER,
+                          description: "ราคาเฉพาะตารางเมตรกรณีที่ระบุในภาพโดยตรง ถ้าไม่มีให้กำหนดเป็น 0 หรือ null"
+                        },
+                        wireCount: {
+                          type: Type.STRING,
+                          description: "จำนวนลวดสายอัดแรง ถ้ามีระบุ เช่น '4', '5', '6', '7', '8' หรือถ้าไม่มีใช้ 'auto'"
+                        },
+                        label: {
+                          type: Type.STRING,
+                          description: "บันทึกย่อหรือรายละเอียดสั้นๆ รวบรวมจากภาพ เช่น 'แผ่นพื้น 2.50 ม. (สายไฟ 4 เส้น)'"
+                        }
+                      },
+                      required: ["length", "count"]
                     }
-                  },
-                  required: ["length", "count"]
-                }
+                  }
+                },
+                required: ["slabs"]
               }
-            },
-            required: ["slabs"]
+            }
+          });
+          if (response) {
+            lastError = null;
+            break;
           }
+        } catch (err: any) {
+          console.warn(`Error with model ${modelName}:`, err?.message || err);
+          lastError = err;
         }
-      });
+      }
+
+      if (lastError) {
+        throw lastError;
+      }
+
+      if (!response) {
+        throw new Error("ไม่มีข้อมูลตอบรับจาก Gemini API หลังจากพยายามทุกโมเดลแล้ว");
+      }
 
       const textOutput = response.text;
       if (!textOutput) {
@@ -222,53 +246,77 @@ async function startServer() {
         `- M.O.C. sheet: ${mocPrice ?? 230} Baht/sqm\n\n` +
         `Output strictly according to the requested JSON response schema. Ensure lengths are floating point numbers (e.g. 2.0, 3.5, etc.) and count is an integer.`;
 
-      const response = await ai.models.generateContent({
-        model: "gemini-3.5-flash",
-        contents: prompt,
-        config: {
-          systemInstruction,
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-              slabs: {
-                type: Type.ARRAY,
-                items: {
-                  type: Type.OBJECT,
-                  properties: {
-                    length: {
-                      type: Type.NUMBER,
-                      description: "ความยาวของแผ่นพื้นกี่เมตร (เมตร) เช่น 2.00, 3.50"
-                    },
-                    count: {
-                      type: Type.INTEGER,
-                      description: "จำนวนแผ่นพื้นกี่แผ่น (ชิ้น / แผ่น), ปล่อยว่างหรือดีฟอลต์เป็น 1"
-                    },
-                    boardType: {
-                      type: Type.STRING,
-                      description: "ประเภทแผ่นพื้น: 'normal' (ธรรมดา) หรือ 'm.o.c' (มอก.)"
-                    },
-                    customPriceSqm: {
-                      type: Type.NUMBER,
-                      description: "ราคากลางต่อ ตร.ม. ที่ผู้ใช้ระบุ (เช่น สำหรับ normal ใช้ราคา normalPrice, สำหรับ m.o.c ใช้ราคา mocPrice)"
-                    },
-                    wireCount: {
-                      type: Type.STRING,
-                      description: "จำนวนลวดสายอัดแรง ถ้ามีในข้อความ เช่น '4', '5', '6', '7', '8' ดีฟอลต์คือ 'auto'"
-                    },
-                    label: {
-                      type: Type.STRING,
-                      description: "บันทึกข้อมูลดั้งเดิมสั้นๆ ของแถว เช่น 'แผ่นพื้น 2.00 เมตร ลวด 5 เส้น'"
+      const modelsToTry = ["gemini-3.5-flash", "gemini-3.1-flash-lite"];
+      let response = null;
+      let lastError = null;
+
+      for (const modelName of modelsToTry) {
+        try {
+          console.log(`Attempting Gemini API with model: ${modelName}`);
+          response = await ai.models.generateContent({
+            model: modelName,
+            contents: prompt,
+            config: {
+              systemInstruction,
+              responseMimeType: "application/json",
+              responseSchema: {
+                type: Type.OBJECT,
+                properties: {
+                  slabs: {
+                    type: Type.ARRAY,
+                    items: {
+                      type: Type.OBJECT,
+                      properties: {
+                        length: {
+                          type: Type.NUMBER,
+                          description: "ความยาวของแผ่นพื้นกี่เมตร (เมตร) เช่น 2.00, 3.50"
+                        },
+                        count: {
+                          type: Type.INTEGER,
+                          description: "จำนวนแผ่นพื้นกี่แผ่น (ชิ้น / แผ่น), ปล่อยว่างหรือดีฟอลต์เป็น 1"
+                        },
+                        boardType: {
+                          type: Type.STRING,
+                          description: "ประเภทแผ่นพื้น: 'normal' (ธรรมดา) หรือ 'm.o.c' (มอก.)"
+                        },
+                        customPriceSqm: {
+                          type: Type.NUMBER,
+                          description: "ราคากลางต่อ ตร.ม. ที่ผู้ใช้ระบุ (เช่น สำหรับ normal ใช้ราคา normalPrice, สำหรับ m.o.c ใช้ราคา mocPrice)"
+                        },
+                        wireCount: {
+                          type: Type.STRING,
+                          description: "จำนวนลวดสายอัดแรง ถ้ามีในข้อความ เช่น '4', '5', '6', '7', '8' ดีฟอลต์คือ 'auto'"
+                        },
+                        label: {
+                          type: Type.STRING,
+                          description: "บันทึกข้อมูลดั้งเดิมสั้นๆ ของแถว เช่น 'แผ่นพื้น 2.00 เมตร ลวด 5 เส้น'"
+                        }
+                      },
+                      required: ["length", "count", "boardType", "customPriceSqm"]
                     }
-                  },
-                  required: ["length", "count", "boardType", "customPriceSqm"]
-                }
+                  }
+                },
+                required: ["slabs"]
               }
-            },
-            required: ["slabs"]
+            }
+          });
+          if (response) {
+            lastError = null;
+            break;
           }
+        } catch (err: any) {
+          console.warn(`Error with model ${modelName}:`, err?.message || err);
+          lastError = err;
         }
-      });
+      }
+
+      if (lastError) {
+        throw lastError;
+      }
+
+      if (!response) {
+        throw new Error("ไม่มีข้อมูลตอบรับจาก Gemini API หลังจากพยายามทุกโมเดลแล้ว");
+      }
 
       const textOutput = response.text;
       if (!textOutput) {
